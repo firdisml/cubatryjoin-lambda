@@ -1,0 +1,51 @@
+service: sls
+
+custom: 
+  settings:
+    POSTS_TABLE: posts
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  environment: ${self:custom.settings}
+  region: us-east-1
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action: "dynamodb:*"
+          Resource: "*"
+        
+functions:
+  createPost:
+    handler: handler.createPost
+    events:
+      - http:
+          path: /post
+          method: post
+          cors: true
+  getAllPost:
+    handler: handler.getAllPost
+    events:
+      - http:
+          path: /posts
+          method: get
+          cors: true
+
+resources: 
+  Resources: 
+    PostsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+          AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"
+          KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+          TableName: ${self:custom.settings.POSTS_TABLE}
